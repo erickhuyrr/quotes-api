@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote Scraper - Modern Quotes</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --text-muted: #64748b;
+        }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        .quote-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .quote-card:hover {
+            transform: translateY(-2px);
+        }
+        .quote-text {
+            font-size: 1.25rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .quote-text::before {
+            content: '"';
+            font-size: 3rem;
+            color: #e2e8f0;
+            position: absolute;
+            left: -1.5rem;
+            top: -1rem;
+            z-index: -1;
+        }
+        .quote-author {
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: right;
+        }
+        .tags {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tag {
+            background: #eef2ff;
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            align-items: center;
+        }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+        #loading {
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Inspiration Daily</h1>
+            <p>Scraped live from quotes.toscrape.com</p>
+        </header>
+
+        <div id="loading">Loading quotes...</div>
+        <div id="quotes-container"></div>
+
+        <div class="pagination">
+            <button id="prevBtn" onclick="changePage(-1)">Previous</button>
+            <span id="pageDisplay">Page 1</span>
+            <button id="nextBtn" onclick="changePage(1)">Next</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+
+        async function fetchQuotes(page) {
+            const container = document.getElementById('quotes-container');
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            container.innerHTML = '';
+
+            try {
+                const response = await fetch(`/api/quotes?page=${page}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    container.innerHTML = `<p style="color: red; text-align: center;">${data.error}</p>`;
+                    return;
+                }
+
+                data.quotes.forEach(quote => {
+                    const card = document.createElement('div');
+                    card.className = 'quote-card';
+                    card.innerHTML = `
+                        <div class="quote-text">${quote.text}</div>
+                        <div class="quote-author">— ${quote.author}</div>
+                        <div class="tags">
+                            ${quote.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                document.getElementById('pageDisplay').textContent = `Page ${page}`;
+                document.getElementById('prevBtn').disabled = page <= 1;
+                document.getElementById('nextBtn').disabled = data.quotes.length < 10; // Simple check for next page
+
+            } catch (err) {
+                container.innerHTML = '<p style="color: red; text-align: center;">Failed to load quotes.</p>';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            fetchQuotes(currentPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Initial load
+        fetchQuotes(currentPage);
+    </script>
+</body>
+</html>
