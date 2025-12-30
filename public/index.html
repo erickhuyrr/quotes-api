@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenQuotes - Minimalist Inspiration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #000000;
+            --bg: #ffffff;
+            --secondary-bg: #f9f9f9;
+            --text: #1a1a1a;
+            --text-muted: #666666;
+            --border: #eeeeee;
+        }
+
+        [data-theme="dark"] {
+            --primary: #ffffff;
+            --bg: #000000;
+            --secondary-bg: #111111;
+            --text: #f0f0f0;
+            --text-muted: #888888;
+            --border: #222222;
+        }
+
+        body {
+            font-family: "Georgia", serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            transition: background 0.4s ease;
+            line-height: 1.8;
+        }
+
+        .layout {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 400;
+            letter-spacing: -1px;
+            text-transform: lowercase;
+            text-decoration: none;
+            color: var(--primary);
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            transition: opacity 0.2s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.6;
+        }
+
+        .categories-nav {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            margin-bottom: 3rem;
+            scrollbar-width: none;
+        }
+
+        .categories-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-chip {
+            white-space: nowrap;
+            padding: 0.4rem 1.2rem;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-family: sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cat-chip.active {
+            background: var(--primary);
+            color: var(--bg);
+            border-color: var(--primary);
+        }
+
+        .quote-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+        }
+
+        .quote-item {
+            padding-bottom: 4rem;
+            border-bottom: 1px solid var(--border);
+            animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .quote-content {
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .quote-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .author-info {
+            font-family: sans-serif;
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        .quote-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-btn {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: var(--bg);
+        }
+
+        .footer {
+            margin-top: 6rem;
+            padding: 4rem 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-family: sans-serif;
+        }
+
+        .page-num {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .page-num.active {
+            background: var(--primary);
+            color: var(--bg);
+            border-color: var(--primary);
+        }
+
+        .page-num:hover:not(.active) {
+            background: var(--secondary-bg);
+        }
+
+        #loader {
+            text-align: center;
+            padding: 4rem;
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        .share-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: var(--bg);
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <header>
+            <a href="#" class="logo">zen.quotes</a>
+            <div class="nav-controls">
+                <button class="icon-btn" onclick="refreshData()" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="icon-btn" onclick="toggleTheme()" id="themeIcon">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="categories-nav" id="categories">
+            <div class="cat-chip active" onclick="filterCat('all')">All</div>
+            <div class="cat-chip" onclick="filterCat('love')">Love</div>
+            <div class="cat-chip" onclick="filterCat('inspirational')">Inspiration</div>
+            <div class="cat-chip" onclick="filterCat('life')">Life</div>
+            <div class="cat-chip" onclick="filterCat('humor')">Humor</div>
+            <div class="cat-chip" onclick="filterCat('books')">Books</div>
+        </div>
+
+        <div id="loader">Gathering wisdom...</div>
+        <div id="quote-stack" class="quote-stack"></div>
+
+        <div class="footer">
+            <div id="pagination" class="pagination">
+                <!-- Numbers will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="shareToast" class="share-toast">Link copied to clipboard</div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 10; // Scraper usually has around 10 pages
+
+        function toggleTheme() {
+            const body = document.documentElement;
+            const current = body.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', target);
+            document.getElementById('themeIcon').innerHTML = target === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        }
+
+        async function fetchQuotes() {
+            const stack = document.getElementById('quote-stack');
+            const loader = document.getElementById('loader');
+            stack.innerHTML = '';
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch(`/api/quotes?page=${currentPage}`);
+                const data = await response.json();
+
+                stack.innerHTML = '';
+                data.quotes.forEach(q => {
+                    const el = document.createElement('div');
+                    el.className = 'quote-item';
+                    el.innerHTML = `
+                        <div class="quote-content">"${q.text}"</div>
+                        <div class="quote-meta">
+                            <div class="author-info">— ${q.author}</div>
+                            <div class="quote-actions">
+                                <button class="action-btn" onclick="shareQuote('${q.text.replace(/'/g, "\\'")}')">
+                                    <i class="far fa-paper-plane"></i> Share
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    stack.appendChild(el);
+                });
+
+                renderPagination();
+                
+            } catch (err) {
+                stack.innerHTML = '<p>Connection lost. Try refreshing.</p>';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function renderPagination() {
+            const container = document.getElementById('pagination');
+            container.innerHTML = '';
+
+            // Add first page
+            addPageBtn(1, container);
+
+            if (currentPage > 3) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                container.appendChild(dots);
+            }
+
+            // Add middle pages
+            for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                addPageBtn(i, container);
+            }
+
+            if (currentPage < totalPages - 2) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                container.appendChild(dots);
+            }
+
+            // Add last page
+            addPageBtn(totalPages, container);
+        }
+
+        function addPageBtn(num, container) {
+            const btn = document.createElement('div');
+            btn.className = `page-num ${num === currentPage ? 'active' : ''}`;
+            btn.textContent = num;
+            btn.onclick = () => goToPage(num);
+            container.appendChild(btn);
+        }
+
+        function goToPage(num) {
+            currentPage = num;
+            fetchQuotes();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function filterCat(cat) {
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            currentPage = 1;
+            fetchQuotes();
+        }
+
+        function refreshData() {
+            currentPage = 1;
+            fetchQuotes();
+        }
+
+        function shareQuote(text) {
+            navigator.clipboard.writeText(text);
+            const toast = document.getElementById('shareToast');
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 2000);
+        }
+
+        // Init
+        fetchQuotes();
+    </script>
+</body>
+</html>
