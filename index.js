@@ -9,8 +9,8 @@ app.use(cors());
 app.use(express.static('public'));
 
 // Serve replit.md as plain text
-app.get('/docs.md', (req, res) => {
-  res.type('text/plain').sendFile(path.join(__dirname, 'docs.md'));
+app.get('/replit.md', (req, res) => {
+  res.type('text/plain').sendFile(path.join(__dirname, 'replit.md'));
 });
 
 const HEADERS = {
