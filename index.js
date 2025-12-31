@@ -8,16 +8,55 @@ const app = express();
 app.use(cors());
 app.use(express.static('public'));
 
+// Serve replit.md as plain text
+app.get('/docs.md', (req, res) => {
+  res.type('text/plain').sendFile(path.join(__dirname, 'docs.md'));
+});
+
 const HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120",
   "Accept-Language": "en-US,en;q=0.9",
 };
 
-let globalFetchCount = 0;
 let qotd = {
   quote: null,
   date: null
 };
+
+let cachedTags = null;
+let tagsLastFetch = null;
+
+app.get("/api/tags", async (req, res) => {
+  try {
+    // Return cached tags if fresher than 1 hour
+    if (cachedTags && tagsLastFetch && Date.now() - tagsLastFetch < 3600000) {
+      return res.json({ tags: cachedTags });
+    }
+
+    const response = await axios.get("https://www.goodreads.com/quotes", { headers: HEADERS });
+    const $ = cheerio.load(response.data);
+    const tags = new Set();
+
+    // Fetch tags from main quotes page
+    $(".quoteFooter .greyText a").each((_, el) => {
+      const tag = $(el).text().trim();
+      if (tag) tags.add(tag);
+    });
+
+    // Common quote tags to ensure we have a good list
+    const defaultTags = ["love", "death", "inspiration", "life", "success", "motivation", "philosophy", "wisdom", "happiness", "fear", "hope", "friendship", "family", "courage", "truth", "beauty", "change"];
+    defaultTags.forEach(tag => tags.add(tag));
+
+    const tagsList = Array.from(tags).sort();
+    cachedTags = tagsList;
+    tagsLastFetch = Date.now();
+
+    res.json({ tags: tagsList });
+  } catch (error) {
+    console.error("Error fetching tags:", error);
+    res.status(500).json({ error: "Failed to fetch tags" });
+  }
+});
 
 app.get("/api/qotd", async (req, res) => {
   const today = new Date().toISOString().split('T')[0];
@@ -56,7 +95,6 @@ app.get("/api/quotes", async (req, res) => {
     const tag = req.query.tag && req.query.tag !== 'all' ? req.query.tag : '';
     const sort = req.query.sort || '';
     
-    // Constructing Goodreads URL with sort parameter to reach "all" content
     let url = tag 
       ? `https://www.goodreads.com/quotes/tag/${tag}?page=${page}&sort=original`
       : `https://www.goodreads.com/quotes?page=${page}`;
@@ -74,7 +112,6 @@ app.get("/api/quotes", async (req, res) => {
     const $ = cheerio.load(response.data);
     const quotes = [];
 
-    // Extract quote count for the current tag
     let quoteCount = "Unknown";
     const countText = $(".leftContainer h1").text();
     const match = countText.match(/of ([\d,]+)/);
@@ -94,7 +131,6 @@ app.get("/api/quotes", async (req, res) => {
       const tags = $(el).find(".quoteFooter .greyText a").map((_, t) => $(t).text()).get();
 
       quotes.push({ text, author, likes, tags, avatar });
-      globalFetchCount++; // Increment global counter
     });
 
     if (quotes.length === 0) {
@@ -106,7 +142,6 @@ app.get("/api/quotes", async (req, res) => {
       page: Number(page),
       total: quotes.length,
       quoteCount,
-      globalFetchCount,
       quotes,
     });
   } catch (error) {
