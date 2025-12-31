@@ -882,7 +882,7 @@
             modal.classList.add('open');
             
             try {
-                const response = await fetch('/replit.md');
+                const response = await fetch('/docs.html');
                 const markdown = await response.text();
                 docsBody.innerHTML = parseMarkdown(markdown);
             } catch (err) {
